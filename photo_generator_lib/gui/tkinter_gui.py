@@ -1,45 +1,10 @@
 import tkinter as tk
 from enum import Enum
 from tkinter import messagebox
+
 from PIL import Image, ImageTk
 
 from photo_generator_lib.prompt.prompt_generator import ShotType, PersonType, Archetype, ArtStyle
-
-
-# Définir les Enums
-class ChoixUnique(Enum):
-    OPTION1 = "Option 1"
-    OPTION2 = "Option 2"
-    OPTION3 = "Option 3"
-
-
-class ChoixMultiple(Enum):
-    OPTION_A = "Option A"
-    OPTION_B = "Option B"
-    OPTION_C = "Option C"
-    OPTION_D = "Option D"
-    OPTION_E = "Option E"
-    OPTION_F = "Option F"
-    OPTION_G = "Option G"
-    OPTION_H = "Option H"
-    OPTION_I = "Option I"
-    OPTION_J = "Option J"
-    OPTION_K = "Option K"
-    OPTION_L = "Option L"
-    OPTION_M = "Option M"
-    OPTION_N = "Option N"
-    OPTION_O = "Option O"
-    OPTION_P = "Option P"
-    OPTION_Q = "Option Q"
-    OPTION_R = "Option R"
-    OPTION_S = "Option S"
-    OPTION_T = "Option T"
-    OPTION_U = "Option U"
-    OPTION_V = "Option V"
-    OPTION_W = "Option W"
-    OPTION_X = "Option X"
-    OPTION_Y = "Option Y"
-    OPTION_Z = "Option Z"
 
 
 class TemporaryPersonaEnum(str, Enum):
@@ -62,6 +27,8 @@ class Application(tk.Tk):
         self.seed_var = tk.StringVar()
         self.denoising_step_var = tk.DoubleVar(value=0)
 
+        # self.load_state()
+
         self.create_widgets()
 
     def create_widgets(self):
@@ -75,64 +42,60 @@ class Application(tk.Tk):
         left_frame = tk.Frame(main_frame)
         left_frame.pack(side=tk.LEFT, fill=tk.Y, padx=10)
 
-        self.create_choix_unique(left_frame, "Model", TemporaryPersonaEnum, self.model_var)
-        self.create_choix_unique(left_frame, "Person type", PersonType, self.person_type_var)
-        self.create_choix_unique(left_frame, "Shot type", ShotType, self.shot_type_var)
-        self.create_choix_unique(left_frame, "Archetype", Archetype, self.archetype_var)
+        self.create_unique_choice_box(left_frame, "Model", TemporaryPersonaEnum, self.model_var)
 
-        self.create_choix_multiple_with_listbox(left_frame)
+        prompt_command_frame = tk.LabelFrame(left_frame, text="Prompt parameters", bd=2)
+        prompt_command_frame.pack(fill=tk.BOTH, padx=5, pady=5)
 
-        self.create_text_zone(left_frame)
+        self.create_unique_choice_box(prompt_command_frame, "Person type", PersonType, self.person_type_var)
+        self.create_unique_choice_box(prompt_command_frame, "Shot type", ShotType, self.shot_type_var)
+        self.create_unique_choice_box(prompt_command_frame, "Archetype", Archetype, self.archetype_var)
+        self.create_multiple_choice_box(prompt_command_frame)
 
-        self.create_denoising_slider(left_frame)
+        self.create_prompt_frame(left_frame)
 
-        self.create_seed_zone(left_frame)
+        model_parameter_frame = tk.LabelFrame(left_frame, text="Model Command", bd=2)
+        model_parameter_frame.pack(fill=tk.BOTH, padx=5, pady=5)
+        self.create_denoising_slider(model_parameter_frame)
+        self.create_seed_zone(model_parameter_frame)
 
         self.create_button(left_frame)
 
-    def create_choix_unique(self, parent, text: str, values: Enum, var):
+    def create_unique_choice_box(self, parent, text: str, values: Enum, var):
         frame = tk.Frame(parent)
         frame.pack(fill=tk.X, pady=5)
 
-        frame.grid_columnconfigure(0, weight=1, minsize=200)  # Colonne pour le texte
-        frame.grid_columnconfigure(1, weight=1, minsize=350)  # Colonne pour le menu déroulant
+        frame.grid_columnconfigure(0, weight=1, minsize=200)
+        frame.grid_columnconfigure(1, weight=1, minsize=350)
 
         label_unique = tk.Label(frame, text=text)
         label_unique.grid(row=0, column=0, padx=5, sticky="w")
 
         option_menu = tk.OptionMenu(frame, var, *[choix.name for choix in values])
-        option_menu.grid(row=0, column=1, padx=5,
-                         sticky="ew")
+        option_menu.grid(row=0, column=1, padx=5, sticky="ew")
 
-    def create_choix_multiple_with_listbox(self, parent):
-        label_multiple = tk.Label(parent, text="Choix multiples (avec Listbox)")
-        label_multiple.pack(fill=tk.X, pady=5)
+    def create_multiple_choice_box(self, parent):
+        frame = tk.Frame(parent)
+        frame.pack(fill=tk.X, pady=5)
 
-        scrollable_frame = tk.Frame(parent)
-        scrollable_frame.pack(fill=tk.BOTH, expand=True)
+        frame.grid_columnconfigure(0, weight=0, minsize=250)
+        label_multiple = tk.Label(frame, text="Art Style", anchor="w")
+        label_multiple.grid(row=0, column=0, sticky="nw", padx=5)
 
-        canvas = tk.Canvas(scrollable_frame)
-        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.listbox = tk.Listbox(frame, selectmode=tk.MULTIPLE, height=5)
+        self.listbox.grid(row=0, column=1, sticky="nsew")
 
-        scrollbar = tk.Scrollbar(scrollable_frame, orient="vertical", command=canvas.yview)
-        scrollbar.pack(side=tk.RIGHT, fill="y")
+        for choix in ArtStyle:
+            self.listbox.insert(tk.END, choix.name)
 
-        scrollable_frame_inner = tk.Frame(canvas)
-        canvas.create_window((0, 0), window=scrollable_frame_inner, anchor="nw")
-        canvas.configure(yscrollcommand=scrollbar.set)
+        frame.grid_columnconfigure(1, weight=1)
 
-        self.listbox = tk.Listbox(scrollable_frame_inner, selectmode=tk.MULTIPLE, height=10)
-        self.listbox.pack(fill=tk.BOTH, expand=True)
+    def create_prompt_frame(self, parent):
+        prompt_frame = tk.LabelFrame(parent, text="Prompt", bd=2)
+        prompt_frame.pack(fill=tk.BOTH, padx=5, pady=5)
 
-        for choix in ChoixMultiple:
-            self.listbox.insert(tk.END, choix.value)
-
-        scrollable_frame_inner.update_idletasks()
-        canvas.config(scrollregion=canvas.bbox("all"))
-
-    def create_text_zone(self, parent):
-        self.text_zone = tk.Text(parent, height=4, width=40)
-        self.text_zone.pack(pady=10)
+        self.text_zone = tk.Text(prompt_frame, height=21, width=40)
+        self.text_zone.pack(pady=10, padx=10, fill=tk.BOTH, expand=True)
 
     def create_denoising_slider(self, parent):
         denoising_frame = tk.Frame(parent)
@@ -202,26 +165,23 @@ class Application(tk.Tk):
 
     def afficher_image(self, chemin_image="1737925249_0_4532.png"):
         img = Image.open(chemin_image)
-        img = img.resize((512*3, 512*3))
+        img = img.resize((512 * 3, 512 * 3))
         img_tk = ImageTk.PhotoImage(img)
         self.label_image.config(image=img_tk)
         self.label_image.image = img_tk
 
     def afficher_petite_image(self, label, chemin_image):
         img = Image.open(chemin_image)
-        img = img.resize((256, 256))
+        img = img.resize((int(512 / 2.1), int(512 / 2.1)))
         img_tk = ImageTk.PhotoImage(img)
         label.config(image=img_tk)
         label.image = img_tk
 
     def create_button(self, parent):
-        button_valider = tk.Button(parent, text="Valider", command=self.valider)
+        button_valider = tk.Button(parent, text="Generate", command=self.generate, height=4, width=20)
         button_valider.pack(fill=tk.X, pady=5)
 
-        button_image = tk.Button(parent, text="Afficher image", command=self.afficher_image)
-        button_image.pack(fill=tk.X, pady=5)
-
-    def valider(self):
+    def generate(self):
         choix_unique = self.shot_type_var.get()
         choix_unique1 = self.person_type_var.get()
         seed = self.seed_var.get()
@@ -231,6 +191,40 @@ class Application(tk.Tk):
 
         messagebox.showinfo("Choix",
                             f"Choix unique : {choix_unique} {choix_unique1}\nSeed : {seed}\nDenoising Step : {denoising_step}\nChoix multiples : {', '.join(choix_multiple)}")
+
+        # self.save_state()
+
+    # def save_state(self):
+    #     state = {
+    #         "model": self.model_var.get(),
+    #         "shot_type": self.shot_type_var.get(),
+    #         "person_type": self.person_type_var.get(),
+    #         "archetype": self.archetype_var.get(),
+    #         "art_style": {choix: var.get() for choix, var in self.art_style_var.items()},
+    #         "seed": self.seed_var.get(),
+    #         "denoising_step": self.denoising_step_var.get(),
+    #         "multiple_choice": [self.listbox.get(i) for i in self.listbox.curselection()]
+    #     }
+    #     with open("app_state.json", "w") as f:
+    #         json.dump(state, f)
+    #
+    # def load_state(self):
+    #     if os.path.exists("app_state.json"):
+    #         with open("app_state.json", "r") as f:
+    #             state = json.load(f)
+    #
+    #             self.model_var.set(state["model"])
+    #             self.shot_type_var.set(state["shot_type"])
+    #             self.person_type_var.set(state["person_type"])
+    #             self.archetype_var.set(state["archetype"])
+    #             for choix, var in self.art_style_var.items():
+    #                 var.set(state["art_style"].get(choix, False))
+    #             self.seed_var.set(state["seed"])
+    #             self.denoising_step_var.set(state["denoising_step"])
+    #
+    #             for i in range(self.listbox.size()):
+    #                 if self.listbox.get(i) in state["multiple_choice"]:
+    #                     self.listbox.select_set(i)
 
 
 if __name__ == "__main__":
