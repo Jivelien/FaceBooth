@@ -155,7 +155,11 @@ class PromptGenerator:
         self.archetype: Optional[Archetype] = None
         self.art_style: List[str] = []
 
-        self.actual_prompt = self.generate_prompt()
+        self.actual_prompt = ""
+        self.actual_art_style = ""
+
+        self.generate_prompt()
+
 
     def generate_prompt(self):
         prompt = ""
@@ -166,14 +170,22 @@ class PromptGenerator:
             prompt += f" {self.person_type.value}"
         if self.archetype and self.archetype != Archetype.NONE:
             prompt += f" as {self.archetype.value}"
-        if len(self.art_style)>0:
-            prompt += f". Art by "
-            if len(self.art_style) > 1:
-                prompt += ', '.join(self.art_style[:-1]) + ' and ' + self.art_style[-1]
-            else:
-                prompt += ''.join(self.art_style)
-
         self.actual_prompt = prompt
+
+
+    def generate_art_style(self):
+        art_style = ""
+        if len(self.art_style) > 0:
+            art_style += f"Art by "
+            if len(self.art_style) > 1:
+                art_style += ', '.join(self.art_style[:-1]) + ' and ' + self.art_style[-1]
+            else:
+                art_style += ''.join(self.art_style)
+        self.actual_art_style = art_style
+
+    def prompt(self):
+        self.generate_art_style()
+        return ". ".join([self.actual_prompt, self.actual_art_style])
 
     def taking(self, a_part):
         if isinstance(a_part, ShotType):

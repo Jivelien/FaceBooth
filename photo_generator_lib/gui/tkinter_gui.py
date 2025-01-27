@@ -100,7 +100,7 @@ class TkinterGui(tk.Tk):
 
         frame.grid_columnconfigure(1, weight=1)
 
-        self.listbox.bind("<<ListboxSelect>>", lambda event: self.update_prompt())
+        self.listbox.bind("<<ListboxSelect>>", lambda event: self.update_art_style())
 
     def _create_prompt_frame(self, parent):
         prompt_frame = tk.LabelFrame(parent, text="Prompt", bd=2)
@@ -199,6 +199,11 @@ class TkinterGui(tk.Tk):
         self.text_zone.delete(1.0, tk.END)
         self.text_zone.insert(tk.END, prompt_text)
 
+    def update_art_style(self):
+        art_styles = [ArtStyle[self.listbox.get(i)] for i in self.listbox.curselection()]
+        self.prompt_generator.taking(a_part=art_styles)
+
+
     def change_large_image(self, event, index):
         self.afficher_image(f"output_last/{index}.png")
 
@@ -228,8 +233,8 @@ class TkinterGui(tk.Tk):
         button_valider.pack(fill=tk.X, pady=5)
 
     def generate(self):
-        self.dreambooth.generate(prompt=[self.prompt_generator.actual_prompt] * 6)
-        print(self.prompt_generator.actual_prompt)
+        self.dreambooth.generate(prompt=[self.prompt_generator.prompt()] * 6)
+        print(self.prompt_generator.prompt())
         for i in range(6):
             filename = f"{int(time.time())}_{i}_{self.seed_generator.actual_seed()}.png"
             self.dreambooth.last_result[i].save(f"output/{filename}")
