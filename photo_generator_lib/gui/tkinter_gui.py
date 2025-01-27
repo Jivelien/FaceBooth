@@ -43,23 +43,24 @@ class Application(tk.Tk):
         left_frame.pack(side=tk.LEFT, fill=tk.Y, padx=10)
 
         self.create_unique_choice_box(left_frame, "Model", TemporaryPersonaEnum, self.model_var)
+        self.create_prompt_parameters_frame(left_frame)
+        self.create_prompt_frame(left_frame)
+        self.create_dreambooth_parameter_frame(left_frame)
+        self.create_generate_button(left_frame)
 
+    def create_prompt_parameters_frame(self, left_frame):
         prompt_command_frame = tk.LabelFrame(left_frame, text="Prompt parameters", bd=2)
         prompt_command_frame.pack(fill=tk.BOTH, padx=5, pady=5)
-
         self.create_unique_choice_box(prompt_command_frame, "Person type", PersonType, self.person_type_var)
         self.create_unique_choice_box(prompt_command_frame, "Shot type", ShotType, self.shot_type_var)
         self.create_unique_choice_box(prompt_command_frame, "Archetype", Archetype, self.archetype_var)
         self.create_multiple_choice_box(prompt_command_frame)
 
-        self.create_prompt_frame(left_frame)
-
-        model_parameter_frame = tk.LabelFrame(left_frame, text="Model Command", bd=2)
+    def create_dreambooth_parameter_frame(self, left_frame):
+        model_parameter_frame = tk.LabelFrame(left_frame, text="Dreambooth parameters", bd=2)
         model_parameter_frame.pack(fill=tk.BOTH, padx=5, pady=5)
         self.create_denoising_slider(model_parameter_frame)
         self.create_seed_zone(model_parameter_frame)
-
-        self.create_button(left_frame)
 
     def create_unique_choice_box(self, parent, text: str, values: Enum, var):
         frame = tk.Frame(parent)
@@ -73,6 +74,9 @@ class Application(tk.Tk):
 
         option_menu = tk.OptionMenu(frame, var, *[choix.name for choix in values])
         option_menu.grid(row=0, column=1, padx=5, sticky="ew")
+
+        # Lier la mise à jour de prompt lorsque l'option est changée
+        var.trace("w", lambda *args: self.update_prompt())
 
     def create_multiple_choice_box(self, parent):
         frame = tk.Frame(parent)
@@ -89,6 +93,9 @@ class Application(tk.Tk):
             self.listbox.insert(tk.END, choix.name)
 
         frame.grid_columnconfigure(1, weight=1)
+
+        # Lier la mise à jour de prompt lorsque la sélection dans la listbox change
+        self.listbox.bind("<<ListboxSelect>>", lambda event: self.update_prompt())
 
     def create_prompt_frame(self, parent):
         prompt_frame = tk.LabelFrame(parent, text="Prompt", bd=2)
@@ -108,22 +115,50 @@ class Application(tk.Tk):
                                     variable=self.denoising_step_var)
         slider_denoising.pack(fill=tk.X, padx=5)
 
+        self.denoising_step_var.trace("w", lambda *args: self.update_prompt())
+
     def create_seed_zone(self, parent):
         frame_seed = tk.Frame(parent)
         frame_seed.pack(fill=tk.X, pady=5)
 
+        frame_seed.grid_columnconfigure(0, weight=1, minsize=220)
+        frame_seed.grid_columnconfigure(1, weight=1, minsize=230)
+        frame_seed.grid_columnconfigure(2, weight=1, minsize=100)
+
         label_seed = tk.Label(frame_seed, text="Seed")
         label_seed.grid(row=0, column=0, padx=5, sticky="w")
 
-        entry_seed = tk.Entry(frame_seed, textvariable=self.seed_var)
-        entry_seed.grid(row=0, column=1, padx=5, sticky="ew")
+        spinbox_seed = tk.Spinbox(frame_seed, from_=1000, to=9999, textvariable=self.seed_var)
+        spinbox_seed.grid(row=0, column=1, padx=5, sticky="ew")
 
         button_dice = tk.Button(frame_seed, text="🎲", width=4, height=2, command=self.roll_seed)
-        button_dice.grid(row=0, column=2, padx=5)
+        button_dice.grid(row=0, column=2, padx=5, sticky="e")  # sticky="e" pour aligner à droite
+
+        # Lier la mise à jour de prompt lorsque la seed change
+        self.seed_var.trace("w", lambda *args: self.update_prompt())
 
     def roll_seed(self):
         import random
         self.seed_var.set(str(random.randint(1000, 9999)))
+
+    def update_prompt(self):
+        # Créer une chaîne de texte avec les valeurs des choix
+        prompt_text = f"Model: {self.model_var.get()}\n"
+        prompt_text += f"Person Type: {self.person_type_var.get()}\n"
+        prompt_text += f"Shot Type: {self.shot_type_var.get()}\n"
+        prompt_text += f"Archetype: {self.archetype_var.get()}\n"
+
+        # Ajouter les choix multiples
+        art_styles = [self.listbox.get(i) for i in self.listbox.curselection()]
+        prompt_text += f"Art Style: {', '.join(art_styles)}\n"
+
+        # Ajouter la seed et denoising step
+        prompt_text += f"Seed: {self.seed_var.get()}\n"
+        prompt_text += f"Denoising Step: {self.denoising_step_var.get()}"
+
+        # Mettre à jour la zone de texte "Prompt"
+        self.text_zone.delete(1.0, tk.END)
+        self.text_zone.insert(tk.END, prompt_text)
 
     def create_right_frame(self, main_frame):
         right_frame = tk.Frame(main_frame)
@@ -177,7 +212,7 @@ class Application(tk.Tk):
         label.config(image=img_tk)
         label.image = img_tk
 
-    def create_button(self, parent):
+    def create_generate_button(self, parent):
         button_valider = tk.Button(parent, text="Generate", command=self.generate, height=4, width=20)
         button_valider.pack(fill=tk.X, pady=5)
 
