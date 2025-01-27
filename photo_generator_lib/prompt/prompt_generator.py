@@ -159,12 +159,12 @@ class PromptGenerator:
 
     def generate_prompt(self):
         prompt = ""
-        if self.shot_type:
+        if self.shot_type and self.shot_type != ShotType.NONE:
             prompt += f"{self.shot_type.value} of "
         prompt += str(self.persona)
         if self.person_type:
             prompt += f" {self.person_type.value}"
-        if self.archetype:
+        if self.archetype and self.archetype != Archetype.NONE:
             prompt += f" as {self.archetype.value}"
         if len(self.art_style)>0:
             prompt += f". Art by "
