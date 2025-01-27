@@ -31,7 +31,7 @@ class TkinterGui(tk.Tk):
 
         self.selected_index = 0
         self.denoising_step_var = tk.DoubleVar(value=self.dreambooth.num_inference_steps)
-        self.seed_var = tk.StringVar(value=self.seed_generator.actual_seed())
+        self.seed_var = tk.IntVar(value=self.seed_generator.actual_seed())
 
         # self.load_state()
 
@@ -141,6 +141,7 @@ class TkinterGui(tk.Tk):
 
         spinbox_seed = tk.Spinbox(frame_seed, from_=self.seed_generator.min, to=self.seed_generator.max,
                                   textvariable=self.seed_var)
+
         spinbox_seed.grid(row=0, column=1, padx=5, sticky="ew")
 
         button_dice = tk.Button(frame_seed, text="🎲", width=4, height=2, command=self.roll_seed)
@@ -178,9 +179,11 @@ class TkinterGui(tk.Tk):
 
     def roll_seed(self):
         self.seed_generator.randomize()
+        self.seed_var.set(self.seed_generator.actual_seed())
         self.update_seed()
 
     def update_seed(self):
+        self.seed_generator.seed =  self.seed_var.get()
         self.seed_var.set(self.seed_generator.actual_seed())
 
     def update_prompt(self):
