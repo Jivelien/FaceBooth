@@ -1,5 +1,6 @@
 from typing import List
 
+import PIL.Image
 import torch
 from diffusers import StableDiffusionPipeline
 

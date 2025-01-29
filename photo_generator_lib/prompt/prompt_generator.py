@@ -7,6 +7,7 @@ class ShotType(str, Enum):
     CLOSEUP = "closeup portrait"
     FULLBODY = "fullbody photography"
     ACTION = "action shot"
+    CONCEPT = "concept art"
 
 class Persona:
     def __init__(self, name: str):
